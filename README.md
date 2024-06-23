@@ -73,22 +73,14 @@ export interface IItemData {
 export type TItemInfo = Pick<IItem, '_id' | 'title' | 'category' | 'image' | 'price'>;
 ```
 
-Покупатель:
-
-```
-export interface IUser {
-    _id: string;
-    address: string;
-    email: string;
-    phone: string;
-}
-```
-
 Корзина:
 
 ```
 export interface ICart {
     items: IItem[];
+    getItems(): IItem[];
+    addItem(item: IItem): void;
+    delItem(item: IItem): void;
 }
 ```
 
@@ -97,48 +89,54 @@ export interface ICart {
 ```
 export interface IOrder {
     cart: ICart;
-    user: IUser;
     paytype: string;
+    address: string;
+    email: string;
+    phone: string;
     cost: number;
+    step: number;
+    isConfirmed: boolean;
+    checkValidation(order: IOrder): boolean;
+    sendOrder(order: IOrder): boolean;
 }
 ```
 
-Оформление покупки Шаг 1:
+Оформление покупки - Корзина:
 
 ```
-export interface IOrderStepOne {
+export interface IPurchaseCart {
     cart: ICart;
     cost: Pick<IOrder, 'cost'>;
 }
 ```
 
-Оформление покупки Шаг 2:
+Оформление покупки - Детали заказа:
 
 ```
-export type TStepTwo = {
+export type TStepOrder = {
     paytype: Pick<IOrder, 'paytype'>;
-    address: Pick<IUser, 'address'>;
+    address: string;
 }
 
-export interface IOrderStepTwo {
-    paytype: Pick<TStepTwo, 'paytype'>;
-    address: Pick<TStepTwo, 'address'>;
-    checkValidation(data: Record<keyof TStepTwo, string>): boolean;
+export interface IPurchaseOrder {
+    paytype: Pick<TStepOrder, 'paytype'>;
+    address: Pick<TStepOrder, 'address'>;
+    checkValidation(data: Record<keyof TStepOrder, string>): boolean;
 }
 ```
 
-Оформление покупки Шаг 3:
+Оформление покупки - Контакты:
 
 ```
-export type TStepThree = {
-    email: Pick<IUser, 'email'>;
-    phone: Pick<IUser, 'phone'>;
+export type TStepContacts = {
+    email: string;
+    phone: string;
 }
-
-export interface IOrderStepThree {
-    email: Pick<TStepThree, 'email'>;
-    phone: Pick<TStepThree, 'phone'>;
-    checkValidation(data: Record<keyof TStepThree, string>): boolean;
+ 
+export interface IPurchaseContacts {
+    email: Pick<TStepContacts, 'email'>;
+    phone: Pick<TStepContacts, 'phone'>;
+    checkValidation(data: Record<keyof TStepContacts, string>): boolean;
 }
 ```
 
@@ -166,7 +164,7 @@ export interface IOrderStepThree {
 
 ### Слой данных
 
-#### Класс IItem 
+#### Класс Item 
 Класс отвечает за логику работы с товаром.\
 В полях класса хранятся следующие данные:
 - `_id: string` - id товара
@@ -192,19 +190,7 @@ export interface IOrderStepThree {
 - `getItem(itemId: string): IItem` - возвращает товар по его id
 - а так же сеттеры и геттеры для сохранения и получения данных из полей класса
 
-#### Класс IUser
-Класс отвечает за хранение данных покупателя.\
-Конструктор класса принимает инстант брокера событий.\
-В полях класса хранятся следующие данные:
-- `id: string` - уникальный идентификтаор покупателя
-- `address: string` - адрес покупателя в данном заказе
-- `email: string` - адрес электронной почты покупателя
-- `phone: string` - телефон покупателя
-
-Так же класс предоставляет набор методов для взаимодействия с этими данными:
-- сеттеры и геттеры для сохранения и получения данных из полей класса.
-
-#### Класс ICart 
+#### Класс Cart 
 Класс хранит список товаров, добавленных в корзину.\
 В полях класса хранятся следующие данные:
 - `items: IItem[]` - массив товаров, добавленных в корзину
@@ -214,13 +200,15 @@ export interface IOrderStepThree {
 - `addItem(item: IItem): void` - добавляет товар в корзину
 - `delItem(item: IItem): void` - удаляет товар из корзины
 
-#### Класс IOrder
+#### Класс Order
 Класс отвечает за сохранение данных заказа и отправку заказа на сервер.\
 Конструктор класса принимает инстант брокера событий.\
 В полях класса хранятся следующие данные:
 - `cart: ICart` - корзина - список товаров. которые покупатель хочет заказать
-- `user: IUser` - данные покупателя
 - `paytype: string` - способ оплаты
+- `address: string` - Адрес доставки
+- `email: string` - адрес электронной почты
+- `phone: string` - контактный телефон
 - `cost: number` - стоимость заказа
 - `step: number` - шаг, на котором остановился покупатель при оформлении заказа. При закрытии окна оформления и дальнейшем открытии корзины покажем тот шаг, на котором остановился покупатель. Если статус заказа = "Оформлен", шаг становится равным единице
 - `isConfirmed: boolean` - статус заказа: оформлен или еще нет. Если статус заказа = "Оформлен", корзину очищаем
@@ -260,7 +248,7 @@ export interface IOrderStepThree {
 - `submitButton: HTMLButtonElement` - кнопка подтверждения
 - `_form: HTMLFormElement` - элемент формы
 - `inputs: NodeListOf<HTMLInputElement>` - коллекция всех полей ввода формы
-- `errors: Record<string, HTMLElement>` - объект хранящий все элементы для вывода ошибок под полями формы с привязкой к атрибуту name инпутов
+- `errors: Record<string, HTMLElement>` - объект, хранящий все элементы для вывода ошибок под полями формы с привязкой к атрибуту name инпутов
 
 Методы:
 - `setValid(isValid: boolean): void` - изменяет активность кнопки подтверждения
@@ -308,9 +296,9 @@ export interface IOrderStepThree {
 - `card:open` - открытие модального окна с карточкой товара
 - `addToCart:submit` - добавление товара в коризну
 - `delFromCart:submit` - удаление товара из корзины
-- `order-step1:validation` - событие, сообщающее о необходимости валидации 1го шага оформления заказа (проверка на отсутствие в корзине бесценного товара)
-- `order-step2:validation` - событие, сообщающее о необходимости валидации 2го шага оформления заказа (способ оплаты и адрес)
-- `order-step3:validation` - событие, сообщающее о необходимости валидации 3го шага оформления заказа (email и телефон)
-- `orderStep:submit` - подтверждение данных на одном из шагов оформления заказа
-- `order:confirm` - подтверждение (окончание) оформления заказа
+- `purchase-basket:validation` - событие, сообщающее о необходимости валидации 1го шага оформления заказа - проверки на отсутствие в корзине бесценного товара
+- `purchase-order:validation` - событие, сообщающее о необходимости валидации 2го шага оформления заказа - ввод способа оплаты и адрес
+- `purchase-contacts:validation` - событие, сообщающее о необходимости валидации 3го шага оформления заказа - ввод email и телефона
+- `purchaseStep:submit` - подтверждение данных на одном из шагов оформления заказа
+- `purchase:confirm` - подтверждение (окончание) оформления заказа
 

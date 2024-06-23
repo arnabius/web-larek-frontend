@@ -32,12 +32,44 @@ export interface ICart {
 
 export interface IOrder {
     cart: ICart;
-    user: IUser;
     paytype: string;
+    address: string;
+    email: string;
+    phone: string;
     cost: number;
     step: number;
     isConfirmed: boolean;
     checkValidation(order: IOrder): boolean;
     sendOrder(order: IOrder): boolean;
+}
+
+//Оформление покупки - Корзина:
+export interface IPurchaseCart {
+    cart: ICart;
+    cost: Pick<IOrder, 'cost'>;
+}
+
+//Оформление покупки - Детали заказа:
+export type TStepOrder = {
+    paytype: Pick<IOrder, 'paytype'>;
+    address: string;
+}
+
+export interface IPurchaseOrder {
+    paytype: Pick<TStepOrder, 'paytype'>;
+    address: Pick<TStepOrder, 'address'>;
+    checkValidation(data: Record<keyof TStepOrder, string>): boolean;
+}
+
+//Оформление покупки - Контакты:
+export type TStepContacts = {
+    email: string;
+    phone: string;
+}
+ 
+export interface IPurchaseContacts {
+    email: Pick<TStepContacts, 'email'>;
+    phone: Pick<TStepContacts, 'phone'>;
+    checkValidation(data: Record<keyof TStepContacts, string>): boolean;
 }
 
