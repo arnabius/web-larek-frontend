@@ -7,3 +7,6 @@ export const settings = {
         'Content-Type': 'application/json',
     }
 };
+
+export const BASKET_IN = 'In';
+export const BASKET_OUT = 'Out';
