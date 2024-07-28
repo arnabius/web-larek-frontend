@@ -1,15 +1,12 @@
+import { ICardsContainer } from "../../types";
 import { Component } from "../base/Component";
-
-interface ICardsContainer {
-    catalog: HTMLElement[];
-}
 
 export class CardsContainer extends Component<ICardsContainer> {
     protected _catalog: HTMLElement;
     
 
     constructor(protected container: HTMLElement) {
-        super(container)
+        super(container);
     }
 
     set catalog(items: HTMLElement[]) {

@@ -1,26 +1,25 @@
-import { IItem, TCardType } from "../../types";
+import { ICardView, IItem, TCardType } from "../../types";
 import { Component } from "../base/Component";
 import { IEvents } from "../base/events";
-import { CDN_URL, BASKET_IN, BASKET_OUT } from '../../utils/constants';
+import { CDN_URL, BASKET_IN, BASKET_OUT, categoryArray, categoryClasses } from '../../utils/constants';
 
-export class Card extends Component<IItem> {
+export class Card extends Component<ICardView> {
     protected _cardType: TCardType;
     protected itemId: string;
+	protected itemIndex: HTMLSpanElement;
 	protected itemTitle: HTMLElement;
-    protected itemIndex?: HTMLSpanElement;
-	protected itemCategory?: HTMLSpanElement;
+    protected itemCategory?: HTMLSpanElement;
 	protected itemImage?: HTMLImageElement;
 	protected itemDescription?: HTMLElement;
     protected itemPrice: HTMLSpanElement;
     protected addToBasketButton?: HTMLButtonElement; 
     protected delFromBasketButton?: HTMLButtonElement; 
-    basketDirection: string;
+    protected _basketDirection: string;
 	protected events: IEvents;
     
     constructor(protected container: HTMLElement, type: TCardType, events: IEvents) {
         super(container);
         this.events = events;
-
         this.cardType = type;
         this.itemTitle = this.container.querySelector('.card__title');
         this.itemCategory = this.container.querySelector('.card__category');
@@ -42,14 +41,12 @@ export class Card extends Component<IItem> {
             if (this.delFromBasketButton) {
                 this.delFromBasketButton.addEventListener('click', () => {
                     this.basketDirection = BASKET_OUT;
-                    console.log('delFromBasketButton:', this.delFromBasketButton);
-                    this.events.emit('basket:del', { card: this })
+                    this.events.emit('basket:change', this)
                 });
             }
         }
         else 
         if (this.cardType === 'preview') {
-            //console.log('cardType:', this.cardType);
             // Кнопка "В корзину"
             this.addToBasketButton = this.container.querySelector('.card__button');
             
@@ -58,20 +55,21 @@ export class Card extends Component<IItem> {
                     this.events.emit('basket:change', this);
                     this.basketDirectionToggle();
                     this.addToBasketRender();
-                    //console.log('basketDirection toggle after:', this.basketDirection);
                 });
             }
-            //console.log('basketDirection toggle after:', this.basketDirection);
         }
     }
        
-    render(itemData: IItem): HTMLElement {
+    render(itemData: IItem, index?: number): HTMLElement {
+        if (this.itemIndex) {
+            this.itemIndex.textContent = index.toString();
+        }
+
         const {image, title, ...otherItemData} = itemData;
         this.title = title;
         this.image = {image, title};
 
         if (this.addToBasketButton) {
-            //console.log('basketDirection render:', this.basketDirection);
             this.addToBasketRender();
         }
         
@@ -81,6 +79,15 @@ export class Card extends Component<IItem> {
     set category (category: string) {
         if (this.itemCategory) {
             this.itemCategory.textContent = category;
+
+            const categoryName: string[] = Object.entries(categoryArray).find(([key, value]) => { 
+                return value === category;
+            });
+          
+            if (categoryName) {
+                this.itemCategory.classList.remove(...categoryClasses);
+                this.itemCategory.classList.add(`card__category_${categoryName[0]}`);
+            }
         }
     } 
 
@@ -98,8 +105,6 @@ export class Card extends Component<IItem> {
     }
 
     set title (title: string) {
-        //console.log('this', this);
-        //console.log('container', this.container);
         this.itemTitle.textContent = title;   
     }
 
@@ -125,13 +130,7 @@ export class Card extends Component<IItem> {
 	get id() {
 		return this.itemId;
 	}
-
-    set index(ind: number) {
-        if (this.itemIndex) {
-            this.itemIndex.textContent = ind.toString();
-        }
-    }
-    
+   
     set cardType(type: TCardType) {
         this._cardType = type;
     }
@@ -141,7 +140,6 @@ export class Card extends Component<IItem> {
     }
 
     addToBasketRender() {
-        //console.log('basketDirection addToBasketRender start:', this.basketDirection);
         if (this.basketDirection === BASKET_IN) {
             this.addToBasketButton.textContent = 'В корзину';
         }
@@ -150,13 +148,15 @@ export class Card extends Component<IItem> {
         }  
     }
     
-    setBasketDirection(direction: string) {
-        this.basketDirection = direction;
+    set basketDirection(direction: string) {
+        this._basketDirection = direction;
+    }
+
+    get basketDirection() {
+        return this._basketDirection;
     }
 
     basketDirectionToggle() {
-        //console.log('basketDirection toggle start:', this.basketDirection);
-
         if (this.basketDirection === BASKET_IN) {
             this.basketDirection = BASKET_OUT;
         }

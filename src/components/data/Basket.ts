@@ -30,11 +30,15 @@ export class Basket implements IBasket {
     get itemQty(): number {
         return this._itemsArr.length;
     }
+    
+    getItemQty(): number {
+        return this._itemsArr.length;
+    }
 
     set total(total: number) {
         this._total = total;
     }
-
+        
     get total(): number {
         return this._total;
     }
@@ -50,33 +54,47 @@ export class Basket implements IBasket {
     }
 
     addItem(item: IItem) {
-        //this.items = [item, ...this.items]      
-        // проверка на наличие такого товара в корзине и на наличие у товара цены
-        if (!this._itemsArr.some(function(itemVal) {
-            return itemVal.id === item.id;
-        }) && item.price !== null) {
-            this._itemsArr.push(item);
-        }
-
-        this.total = this.recalcTotal();
-        this.itemQty = this.itemsArr.length;
-        
-        this.events.emit('basket:changed');
+        this._itemsArr.push(item);
     }
     
     delItem(item: IItem): void {
         this._itemsArr = this._itemsArr.filter(function(itemVal) {
             return itemVal.id !== item.id;
         });
+    }
 
+    changeBasket(item: IItem): void {
+        if (!this.includes(item.id)) {
+            if (item.price !== null) {
+                this.addItem(item);
+            }
+        }
+        else {
+            this.delItem(item);
+        }
+        
+        this.setTotals();
+    }
+
+    setTotals() {
         this.total = this.recalcTotal();
-        this.itemQty = this.itemsArr.length;
+        this.itemQty = this.getItemQty(); 
+
+        this.events.emit('basket:changed');
     }
 
     // Проверяет наличие товара в корзине
     includes(itemId: string) {
         return this._itemsArr.some(function(itemVal) {
             return itemVal.id === itemId;
-        })
+        });
+    }
+
+    clear() {
+        this.itemsArr.forEach((item: IItem) => {
+            this.delItem(item);
+        });
+
+        this.setTotals();
     }
 }

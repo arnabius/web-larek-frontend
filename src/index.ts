@@ -1,41 +1,29 @@
 import { Basket } from './components/data/Basket';
-import { EventEmitter, IEvents } from './components/base/events';
-import { ItemData } from './components/data/Item';
+import { EventEmitter } from './components/base/events';
+import { ItemData } from './components/data/ItemData';
 import { Order } from './components/data/Order';
 import './scss/styles.scss';
-import { IApi, IBasket, IItem, IPurchase } from './types';
+import { IApi, IBasket, IOrderData, IContactsData, IPurchase } from './types';
 import { Api } from './components/base/api';
 import { API_URL, settings, BASKET_IN, BASKET_OUT } from './utils/constants';
 import { AppApi } from './components/data/AppApi';
-import { Purchase } from './components/data/Purchase';
 import { Card } from './components/view/CardView';
-import { itemsConst } from './utils/tempConstants';
 import { cloneTemplate } from './utils/utils';
 import { CardsContainer } from './components/view/CardsContainer';
 import { Modal } from './components/common/Modal';
 import { BasketHeader } from './components/view/BasketHeaderView';
 import { BasketView } from './components/view/BasketView';
-//import { Modal } from './components/ModalForm';
+import { OrderView } from './components/view/OrderView';
+import { ContactsView } from './components/view/ContactsView';
+import { SuccessView } from './components/view/SuccessView';
 
 const events = new EventEmitter();
 const baseApi: IApi = new Api(API_URL, settings);
 const api = new AppApi(baseApi);
 
 const itemData = new ItemData(events);
-//const itemData1 = new ItemData(events);
 const basket = new Basket(events);
-// Значок корзины в шапке страницы
-const basketHeader = new BasketHeader(document.querySelector('.header__container'), events);
-
 const order = new Order(events);
-const purchase = new Purchase(events);
-
-const cardsContainer = new CardsContainer(document.querySelector('.gallery'));
-
-
-events.onAll((event) => {
-    console.log(event.eventName, event.data)
-})
 
 
 // Получение массива товаров с сервера
@@ -48,6 +36,13 @@ api.getItems()
     console.error(err);
 });
 
+// Конейнер с карточками товаров на главной странице
+const cardsContainer = new CardsContainer(document.querySelector('.gallery'));
+// Значок корзины в шапке страницы
+const basketHeader = new BasketHeader(document.querySelector('.header__container'), events);
+// Модальное окно
+const modal = new Modal(document.querySelector('#modal-container'), events);
+
 // Отрисовка карточки в списке товаров на главной странице на основании шаблона ('#card-catalog');
 const cardTemplate: HTMLTemplateElement = document.querySelector('#card-catalog'); //('#card-preview'); //('#card-catalog');
 
@@ -57,21 +52,24 @@ const cardPreview = new Card(cloneTemplate(cardPreviewTemplate), 'preview', even
 
 // Отрисовка карточки в корзине на основании шаблона
 const cardBasketTemplate: HTMLTemplateElement = document.querySelector('#card-basket'); 
-//const cardBasket = new Card(cloneTemplate(cardBasketTemplate), events);
 
 // Отрисовка всей корзины на основании шаблона
 const basketTemplate: HTMLTemplateElement = document.querySelector('#basket'); 
 // Содержимое корзины
 const basketView = new BasketView(cloneTemplate(basketTemplate), events);
 
+// Форма для ввода данных заказа: способа оплаты и адреса
+const orderParamTemplate: HTMLTemplateElement = document.querySelector('#order');
+const orderParamView = new OrderView(cloneTemplate(orderParamTemplate), events);
 
+// Форма для ввода контактных данных: адреса эл. почты и телефона
+const contactsTemplate: HTMLTemplateElement = document.querySelector('#contacts');
+const contactsParamView = new ContactsView(cloneTemplate(contactsTemplate), events);
 
+// Модалка с успешным завершением заказа
+const successTemplate: HTMLTemplateElement = document.querySelector('#success');
+const successView = new SuccessView(cloneTemplate(successTemplate), events);
 
-// отрисовка массива карточек  ('#card-catalog');
-//const card = new Card(cloneTemplate(cardTemplate), events);
-//const cardArray = [];
-//cardArray.push(card.render(itemsConst[2]));  // пока выводим один товар
-//cardsContainer.render({catalog:cardArray});
 
 events.on('initialData:loaded', () => {
 	const cardsArray = itemData.items.map((item) => {
@@ -82,9 +80,7 @@ events.on('initialData:loaded', () => {
 	cardsContainer.render({ catalog: cardsArray });
 });
 
-
-const modal = new Modal(document.querySelector('#modal-container'), events);
-
+// Открытие карточки товара в модалке
 events.on('card:open', (cardItem: Card) => {
     itemData.previewId = cardItem.id;
     const item = itemData.getItem(cardItem.id);
@@ -103,145 +99,113 @@ events.on('card:open', (cardItem: Card) => {
 
 });
 
-
+// Нажатие кнопки "В корзину"/"Из корзины"
 events.on('basket:change', (cardItem: Card) => {
     const item = itemData.getItem(cardItem.id);
-    // Карточка, которая будет показана в корзине, когда откроют корзину
-    //const cardBasket = new Card(cloneTemplate(cardBasketTemplate), 'basket', events);
 
-    if (cardItem.basketDirection === BASKET_IN) {
-        basket.addItem(item);
-        //item.index = basket.itemQty;
-    }
-    else {
-        basket.delItem(item);
-        //item.index = basket.itemQty;
-    }
+    basket.changeBasket(item);
 
-    /*console.log('basketView.items before: ', basketView.items);
-    basketView.items = basket.itemsArr.map(item => {
-        //console.log('basketView.itemsArr: ', basketView.itemsArr);
-        const cardBasket = new Card(cloneTemplate(cardBasketTemplate), 'basket', events);
-        
-        return cardBasket.render(item)
-    });
-    console.log('basketView.items after: ', basketView.items);*/
-    
-    console.log('basket.itemsArr: ', basket.getItems());
-
-    const basketViewItems = basket.getItems().map(item => {
-        console.log('item: ', item);
-        const cardBasket = new Card(cloneTemplate(cardBasketTemplate), 'basket', events);
-        
-        return cardBasket.render(item);
-    });
-    //console.log('basketViewItems: ', basketViewItems);
-    
-    basketView.items = basketViewItems;
-
-    //console.log('basketView.items after: ', basketView.items);
-    
-    
-    //basketView.render(basket.itemsArr, cardBasket);
-
-    basketHeader.itemQty = basket.itemQty; 
-
-    //console.log('basketView', basketView);
-    
+    order.itemsArr = basket.itemsArr;
+    order.total = basket.total;
 });
 
-events.on('basket:open', (basketInfo: HTMLElement) => {
+// Изменение состава корзины
+events.on('basket:changed', (cardItem: Card) => { 
+    const basketViewItems = basket.getItems().map((item, index) => {
+        const cardBasket = new Card(cloneTemplate(cardBasketTemplate), 'basket', events);
+        
+        return cardBasket.render(item, index + 1);
+    });
+    
+    basketView.items = basketViewItems;
+    basketView.total = basket.total;
+    basketHeader.itemQty = basket.itemQty;   
+});
+
+// Открытие корзины
+events.on('basket:open', (basketInfo: BasketView) => {
     modal.open();
     
     const basketData: IBasket = { itemsArr: basket.itemsArr, total: basket.total }
     modal.renderContent(basketView.render(basketData));
 });
 
-/*
-const card = new Card(cloneTemplate(cardTemplate), events);
-const card1 = new Card(cloneTemplate(cardTemplate), events);
-const cardArray = [];
-cardArray.push(card.render(itemsConst[0]));
-cardArray.push(card1.render(itemsConst[1]));
-
-cardsContainer.render({catalog:cardArray})*/
-//----------------
-/*
-events.on('initialData:loaded', () => {
-	const cardsArray = itemData.items.map((item) => {
-		const cardInstant = new Card(cloneTemplate(cardTemplate), events);
-		return cardInstant.render(item);
-	});
-
-	cardsContainer.render({ catalog: cardsArray });
-});*/
-//----------------
-
-//itemData.previewId = 'c101ab44-ed99-4a54-990d-47aa2bb4e7d9';
-//console.log(itemData.previewId);
-//-------------
-/*
-basket.addItem({
-    "id": "c101ab44-ed99-4a54-990d-47aa2bb4e7d9",
-    "description": "Лизните этот леденец, чтобы мгновенно запоминать и узнавать любой цветовой код CSS.",
-    "image": "/Shell.svg",
-    "title": "HEX-леденец",
-    "category": "другое",
-    "price": 1450
+// Нажатие кнопки "Оформить" в корзине
+events.on('basket:submit', () => {
+    modal.clear();
+    
+    const orderData: IOrderData = { payment: order.payment, address: order.address }
+    modal.renderContent(orderParamView.render(orderData));
+    orderParamView.checkValidation();
 });
 
-basket.addItem({
-    "id": "412bcf81-7e75-4e70-bdb9-d3c73c9803b7",
-    "description": "Откройте эти куки, чтобы узнать, какой фреймворк вы должны изучить дальше.",
-    "image": "/Soft_Flower.svg",
-    "title": "Фреймворк куки судьбы",
-    "category": "дополнительное",
-    "price": 2500
+// Ввод данных пользователем на форме данных заказа
+events.on('orderForm:input', (inputElement: HTMLElement) => {
+    orderParamView.checkValidation();
 });
 
-basket.addItem({
-    "id": "854cef69-976d-4c2a-a18c-2aa45046c390",
-    "description": "Если планируете решать задачи в тренажёре, берите два.",
-    "image": "/5_Dots.svg",
-    "title": "+1 час в сутках",
-    "category": "софт-скил",
-    "price": 750
+// Нажатие "Далее" на форме ввода данных заказа - сохранение данных в модели
+events.on('orderForm:submit', (orderData: { payment: string, address: string }) => {
+    order.addOrderDataToOrder(orderData);
 });
 
-console.log('Basket: ', basket);
+// Отображение формы контактных данных после сохранения данных заказа
+events.on('order:changed', () => {
+    modal.clear();
+
+    const contactsData: IContactsData = { email: order.email, phone: order.phone }
+    modal.renderContent(contactsParamView.render(contactsData));
+});
+
+// Ввод данных пользователем на форме ввода контактных данных
+events.on('contactsForm:input', (inputElement: HTMLElement) => {
+    contactsParamView.checkValidation();
+});
+
+// Нажатие кнопки "Оплатить" на форме ввода контактных данных - завершение оформления заказа
+events.on('contactsForm:submit', (contactsData: { email: string, phone: string }) => {
+    order.addContactsToOrder(contactsData);
+    //Отправим заказ на сервер
+    const purchaseData: IPurchase = {
+        items: order.itemsArr.map(item => {
+            return item.id;
+        }),
+        total: order.total,
+        payment: order.payment,
+        address: order.address,
+        email: order.email,
+        phone: order.phone
+    }
+
+    api.savePurchase(purchaseData)
+    .then((result) => {
+        // Очистим объекты с данными 
+        basket.clear();
+        
+        events.emit('order:sent', { totalSum: order.total });
+        
+        order.clear();
+    })
+    .catch((err) => {
+        console.error(err);
+    });   
+});
 
 
-order.addOrderDataToOrder('Онлайн', 'Тамбов');
+// Данные на сервер отправлены - покажем успешную модалку
+events.on('order:sent', (data: { totalSum: number }) => {
+    modal.clear();
+    basketView.clear();
+    orderParamView.close();
+    contactsParamView.close();
 
-order.addContactsToOrder('arnab@yandex.ru', '9999999999');
+    modal.renderContent(successView.render( { total: data.totalSum }));   
 
-console.log('Order: ', order);*/
-//---------------
+});
 
-
-/*//purchase.addBasketToPurchase(basket, basket.total);
-purchase.items = ["c101ab44-ed99-4a54-990d-47aa2bb4e7d9", "412bcf81-7e75-4e70-bdb9-d3c73c9803b7", "854cef69-976d-4c2a-a18c-2aa45046c390"];
-purchase.payment = 'Онлайн';
-purchase.address = 'Тамбов';
-purchase.email = 'arnab@yandex.ru';
-purchase.phone = '9999999999';
-purchase.total = 4700;*/
-//console.log('Purchase: ', purchase);
-
-/*
-//purchase.savePurchase();
-api.savePurchase(purchase)
-.then((result) => {
-    console.log('result', result); 
-    //console.log('itemsFromApi.items', itemsApi.items);
-    //itemData.items = itemsApi.items;
-    //console.log('itemDataApi', itemData);
-    //console.log('itemDataApi.getItems', itemData.getItems());
-})
-.catch((err) => {
-    console.error(err);
-});*/
-
-//----
-//console.log(order.checkContactsValidation('arnab@yandex.ru', '9999999999'));
+// Закрытие формы успешного оформления заказа
+events.on('success:submit', () => {
+    modal.clear();
+    modal.close();
+});
 

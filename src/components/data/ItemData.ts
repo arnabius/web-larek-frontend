@@ -1,19 +1,6 @@
 import { IEvents } from "../base/events";
 import { IItem, IItemData } from "../../types";
 
-/*export class Item implements IItem {
-    _id: string;
-    title: string;
-    category: string;
-    image: string;
-    description: string;
-    price: number;
-
-    get id () {
-        return this._id;
-    }
-}*/
-
 export class ItemData implements IItemData {
     items: IItem[];
     protected _previewId: string | null;
@@ -23,7 +10,7 @@ export class ItemData implements IItemData {
         this.events = events;
     }
 
-    get previewId (): string | null {
+    get previewId(): string | null {
         return this._previewId;
     }
 
@@ -33,7 +20,6 @@ export class ItemData implements IItemData {
         }
         const selectedItem = this.getItem(itemId);
         if (selectedItem) {
-            //////this.events.emit('item:selected');
             this._previewId = itemId;
         }
     }

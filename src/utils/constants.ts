@@ -10,3 +10,18 @@ export const settings = {
 
 export const BASKET_IN = 'In';
 export const BASKET_OUT = 'Out';
+
+export const categoryArray = {
+    'soft': 'софт-скил',
+    'additional': 'дополнительное',
+    'hard': 'хард-скил',
+    'button': 'кнопка',
+    'other': 'другое'
+}
+
+export const categoryClasses = Object.keys(categoryArray).map(item => { return `card__category_${item}` });
+
+
+export const CARD = 'Онлайн'; //'card';
+export const CASH = 'При получении'; //'cash';
+
