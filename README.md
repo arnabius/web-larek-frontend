@@ -1,4 +1,7 @@
+
 # Проектная работа "Веб-ларек"
+
+https://github.com/arnabius/web-larek-frontend.git
 
 Стек: HTML, SCSS, TS, Webpack
 
