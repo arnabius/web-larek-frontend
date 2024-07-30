@@ -3,9 +3,9 @@ import { BASKET_IN, BASKET_OUT } from '../utils/constants';
 export interface IItem {
     id: string;
     title: string;
-    category: string;
-    image: string;
-    description: string;
+    category?: string;
+    image?: string;
+    description?: string;
     price: number;
 }
 
@@ -41,7 +41,9 @@ export interface IContactsData {
     phone: string;
 }
 
-export interface IOrder extends IBasket, IOrderData, IContactsData {
+export interface IOrder extends /*IBasket,*/ IOrderData, IContactsData {
+    //items: Pick<IItem, 'id'>[];
+    total: number;
     addOrderDataToOrder(orderData: { payment: string, address: string }): void;
     addContactsToOrder(contactsData: { email: string, phone: string }): void;
     clear(): void;

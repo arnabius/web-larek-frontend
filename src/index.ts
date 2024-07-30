@@ -7,7 +7,7 @@ import { IApi, IBasket, IOrderData, IContactsData, IPurchase } from './types';
 import { Api } from './components/base/api';
 import { API_URL, settings, BASKET_IN, BASKET_OUT } from './utils/constants';
 import { AppApi } from './components/data/AppApi';
-import { Card } from './components/view/CardView';
+import { Card } from './components/view/CardView_old';
 import { cloneTemplate } from './utils/utils';
 import { CardsContainer } from './components/view/CardsContainer';
 import { Modal } from './components/common/Modal';
@@ -16,6 +16,9 @@ import { BasketView } from './components/view/BasketView';
 import { OrderView } from './components/view/OrderView';
 import { ContactsView } from './components/view/ContactsView';
 import { SuccessView } from './components/view/SuccessView';
+import { CardPreview } from './components/view/CardPreviewView';
+import { CardCatalog } from './components/view/CardCatalogView';
+import { CardBasket } from './components/view/CardBasketView';
 
 const events = new EventEmitter();
 const baseApi: IApi = new Api(API_URL, settings);
@@ -46,10 +49,6 @@ const modal = new Modal(document.querySelector('#modal-container'), events);
 // Отрисовка карточки в списке товаров на главной странице на основании шаблона ('#card-catalog');
 const cardTemplate: HTMLTemplateElement = document.querySelector('#card-catalog'); //('#card-preview'); //('#card-catalog');
 
-// Отрисовка карточки в модалке на основании шаблона ('#card-preview');
-const cardPreviewTemplate: HTMLTemplateElement = document.querySelector('#card-preview'); 
-const cardPreview = new Card(cloneTemplate(cardPreviewTemplate), 'preview', events);
-
 // Отрисовка карточки в корзине на основании шаблона
 const cardBasketTemplate: HTMLTemplateElement = document.querySelector('#card-basket'); 
 
@@ -73,7 +72,7 @@ const successView = new SuccessView(cloneTemplate(successTemplate), events);
 
 events.on('initialData:loaded', () => {
 	const cardsArray = itemData.items.map((item) => {
-		const cardInstant = new Card(cloneTemplate(cardTemplate), 'catalog', events);
+		const cardInstant = new CardCatalog(cloneTemplate(cardTemplate), item, events);
 		return cardInstant.render(item);
 	});
 
@@ -81,9 +80,12 @@ events.on('initialData:loaded', () => {
 });
 
 // Открытие карточки товара в модалке
-events.on('card:open', (cardItem: Card) => {
+events.on('card:open', (cardItem: CardCatalog) => {
     itemData.previewId = cardItem.id;
     const item = itemData.getItem(cardItem.id);
+    // Отрисовка карточки в модалке на основании шаблона ('#card-preview');
+    const cardPreviewTemplate: HTMLTemplateElement = document.querySelector('#card-preview'); 
+    const cardPreview = new CardPreview(cloneTemplate(cardPreviewTemplate), item, events);
     
     // При открытии модалки проверим наличие товара в корзине, в соответствии с этим выведем надпись на кнопке "В корзину"
     if (basket.includes(item.id)) {
@@ -105,14 +107,14 @@ events.on('basket:change', (cardItem: Card) => {
 
     basket.changeBasket(item);
 
-    order.itemsArr = basket.itemsArr;
+    //order.itemsArr = basket.itemsArr;
     order.total = basket.total;
 });
 
 // Изменение состава корзины
 events.on('basket:changed', (cardItem: Card) => { 
     const basketViewItems = basket.getItems().map((item, index) => {
-        const cardBasket = new Card(cloneTemplate(cardBasketTemplate), 'basket', events);
+        const cardBasket = new CardBasket(cloneTemplate(cardBasketTemplate), item, events);
         
         return cardBasket.render(item, index + 1);
     });
@@ -147,6 +149,7 @@ events.on('orderForm:input', (inputElement: HTMLElement) => {
 // Нажатие "Далее" на форме ввода данных заказа - сохранение данных в модели
 events.on('orderForm:submit', (orderData: { payment: string, address: string }) => {
     order.addOrderDataToOrder(orderData);
+    orderParamView.close();
 });
 
 // Отображение формы контактных данных после сохранения данных заказа
@@ -167,7 +170,7 @@ events.on('contactsForm:submit', (contactsData: { email: string, phone: string }
     order.addContactsToOrder(contactsData);
     //Отправим заказ на сервер
     const purchaseData: IPurchase = {
-        items: order.itemsArr.map(item => {
+        items: basket.itemsArr.map(item => {
             return item.id;
         }),
         total: order.total,
@@ -195,8 +198,6 @@ events.on('contactsForm:submit', (contactsData: { email: string, phone: string }
 // Данные на сервер отправлены - покажем успешную модалку
 events.on('order:sent', (data: { totalSum: number }) => {
     modal.clear();
-    basketView.clear();
-    orderParamView.close();
     contactsParamView.close();
 
     modal.renderContent(successView.render( { total: data.totalSum }));   

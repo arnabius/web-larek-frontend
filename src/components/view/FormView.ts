@@ -33,9 +33,7 @@ export abstract class FormView<T> extends Component<T> {
         this.events.emit(`${this.formName}Form:input`, { field, value });
     }
 
-    protected getInputValues(): Record<string, string> {
-        return;
-	}
+    protected abstract getInputValues(): Record<string, string>;
 
     get form() {
 		return this.container;

@@ -1,8 +1,7 @@
 import { IEvents } from "../base/events";
-import { IBasket, IItem, IOrder } from "../../types";
+import { IOrder } from "../../types";
 
 export class Order implements IOrder {
-    protected _itemsArr: IItem[];
     protected _total: number;
     protected _payment: string;
     protected _address: string;
@@ -17,14 +16,6 @@ export class Order implements IOrder {
         this.address = '';
         this.email = '';
         this.phone = '';
-    }
-
-    set itemsArr(items: IItem[]) {
-        this._itemsArr = items;
-    }
-
-    get itemsArr() {
-        return this._itemsArr;
     }
 
     set total(totalSum: number) {
@@ -79,11 +70,10 @@ export class Order implements IOrder {
     }
 
     clear() {
-        this.itemsArr = [];
         this.payment = '';
         this.address = '';
         this.email = '';
         this.phone = '';
-        this._total = 0;
+        this.total = 0;
     }
 }

@@ -55,7 +55,7 @@ export class OrderView extends FormView<IOrderView> {
 
     set address(addr: string) {
         this._address.value = addr;
-    }
+    } 
 
     get address(): string {
         return this._address.value;

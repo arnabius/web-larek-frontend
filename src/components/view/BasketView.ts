@@ -14,11 +14,12 @@ export class BasketView extends Component<IBasketView> {
         this._items = this.container.querySelector(".basket__list");
         this._total = this.container.querySelector(".basket__price");
         this.events = events;
-          
+         
         this.submitBasketButton = this.container.querySelector(".basket__button");
         this.submitBasketButton.addEventListener('click', () => {
             this.events.emit('basket:submit', this);
         });
+        this.items = [];
     }
 
     set items(items: HTMLElement[]) {
@@ -46,9 +47,4 @@ export class BasketView extends Component<IBasketView> {
             return super.render();
         }        
     }
-
-    clear() {
-        this.items = [];
-        this.total = 0;
-	}
 }

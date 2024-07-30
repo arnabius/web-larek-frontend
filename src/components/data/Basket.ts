@@ -91,9 +91,7 @@ export class Basket implements IBasket {
     }
 
     clear() {
-        this.itemsArr.forEach((item: IItem) => {
-            this.delItem(item);
-        });
+        this.itemsArr.splice(0);
 
         this.setTotals();
     }

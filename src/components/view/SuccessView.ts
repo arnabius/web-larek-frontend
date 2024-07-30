@@ -4,7 +4,7 @@ import { IEvents } from "../base/events";
 
 export class SuccessView extends Component<ISuccessView> {
     protected _total: HTMLParagraphElement;
-    protected submitButton: HTMLButtonElement;
+    protected successButton: HTMLButtonElement;
     protected events: IEvents;
 
     constructor(protected container: HTMLFormElement, events: IEvents) {
@@ -12,10 +12,10 @@ export class SuccessView extends Component<ISuccessView> {
         this.events = events;
         this._total = this.container.querySelector('.order-success__description');
 
-        this.submitButton = this.container.querySelector('.order-success__close');
-        this.submitButton.disabled = false;
+        this.successButton = this.container.querySelector('.order-success__close');
+        this.successButton.disabled = false;
 
-        this.submitButton.addEventListener('click', (event: InputEvent) => {
+        this.successButton.addEventListener('click', (event: InputEvent) => {
 			event.preventDefault();
 			this.events.emit('success:submit', this);
 		});

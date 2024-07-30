@@ -39,7 +39,7 @@ export class Modal <T> extends Component<T> {
     }
 
     clear() {
-        const elem = this.content;  // ".modal__content"
+        const elem = this.content;
 
         let child = elem.lastElementChild;
         while (child) {
